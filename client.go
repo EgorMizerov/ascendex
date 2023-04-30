@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -44,13 +45,21 @@ func (self *AscendexClient) SubscribeToChannel(symbol string) error {
 	}
 	if err := self.conn.WriteJSON(SubscribeToChannelRequest{
 		Op: "sub",
-		Ch: fmt.Sprintf("bbo:%s", symbol),
+		Ch: fmt.Sprintf("bbo:%s", self.convertSymbol(symbol)),
 	}); err != nil {
 		self.Disconnect()
 		return err
 	}
 
 	return nil
+}
+
+func (self *AscendexClient) convertSymbol(source string) string {
+	result := strings.Split(source, "_")
+	if len(result) < 2 {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s", result[0], result[1])
 }
 
 func (self *AscendexClient) ReadMessagesFromChannel(ch chan<- BestOrderBook) {
